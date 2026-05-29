@@ -7,39 +7,42 @@
     <style>
         :root { --naranja-claro: #eec192; --oscuro: #1a1a1a; --gris-claro: #f4f4f4; --blanco: #ffffff; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; color: #333; text-align: center; }
-
-        /* Clases de fondo */
+        
         .bg-oscuro { background: var(--oscuro); color: white; }
         .bg-blanco { background: var(--blanco); color: #333; }
         .bg-gris { background: var(--gris-claro); color: #333; }
 
-        /* Estructura responsiva */
         header { padding: 4rem 1rem; }
         section { padding: 60px 1rem; width: 100%; box-sizing: border-box; }
         
         .logo { width: 120px; border-radius: 50%; border: 3px solid var(--naranja-claro); margin-bottom: 10px; }
+        .btn-add { background: var(--naranja-claro); border: none; padding: 12px 25px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
         
-        /* Contenedores con Flexbox para adaptarse */
+        /* Carrito flotante */
+        #carrito-icono { position: fixed; top: 20px; right: 20px; z-index: 1000; background: var(--naranja-claro); padding: 10px 20px; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #carrito-modal { display: none; position: fixed; top: 70px; right: 20px; background: white; padding: 20px; border: 2px solid #ddd; z-index: 999; width: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: left; color: #333; }
+        
         .flex-container { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; max-width: 1200px; margin: auto; }
         .flex-item { flex: 1; min-width: 300px; }
-        
         .producto-img { width: 100%; max-width: 400px; border-radius: 10px; }
-        .btn-detalles { background: var(--naranja-claro); border: none; padding: 12px 25px; cursor: pointer; font-weight: bold; border-radius: 2px; }
-
         video { width: 100%; max-width: 800px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        
         .valores-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; max-width: 1200px; margin: auto; }
-        
         input, textarea { width: 90%; max-width: 500px; padding: 15px; border: 2px solid #ddd; border-radius: 10px; margin: 10px 0; }
         
-        /* Ajuste para celular */
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .flex-container { flex-direction: column; text-align: center; }
-        }
+        @media (max-width: 768px) { .flex-container { flex-direction: column; } }
     </style>
 </head>
 <body>
+
+<div id="carrito-icono" onclick="toggleCarrito()">🛒 Carrito (<span id="cuenta-carrito">0</span>)</div>
+
+<div id="carrito-modal">
+    <h3>Tu Pedido</h3>
+    <ul id="lista-carrito" style="list-style: none; padding: 0;"></ul>
+    <p><strong>Total: <span id="total-carrito">0</span> COP</strong></p>
+    <button onclick="vaciarCarrito()" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; cursor: pointer;">Vaciar</button>
+    <button onclick="toggleCarrito()" style="cursor: pointer;">Cerrar</button>
+</div>
 
 <header class="bg-oscuro">
     <img src="img/Logo Vibra-Path.webp" alt="Logo" class="logo">
@@ -53,8 +56,8 @@
         <div class="flex-item" style="text-align: left;">
             <h2>VIBRA PATH VERS 1.0</h2>
             <p>Diseñada para quienes buscan comodidad y estilo, esta maleta combina materiales resistentes con un diseño moderno.</p>
-            <h3 style="font-size: 1.5rem;">349.00 COP</h3>
-            <button class="btn-detalles">See details ></button>
+            <h3>349.000 COP</h3>
+            <button class="btn-add" onclick="agregarAlCarrito('Vibra-Path 1.0', 349000)">Agregar al carrito</button>
         </div>
     </div>
 </section>
@@ -73,7 +76,7 @@
 </section>
 
 <section class="bg-gris">
-    <p style="max-width: 800px; margin: auto; font-style: italic;">"Nuestros productos son diseñados a partir de componentes de alta tecnología y materiales sostenibles, desde sistemas de sensores hápticos inteligentes hasta el diseño ergonómico de su estructura. Estos se integran de manera intuitiva para guiar tus pasos y facilitarán tu movilidad".</p>
+    <p style="max-width: 800px; margin: auto; font-style: italic;">"Nuestros productos son diseñados a partir de componentes de alta tecnología y materiales sostenibles. Estos se integran de manera intuitiva para guiar tus pasos y facilitarán tu movilidad".</p>
 </section>
 
 <section id="video" class="bg-blanco">
@@ -107,19 +110,43 @@
     </div>
 </section>
 
-<section id="contacto" class="bg-blanco">
-    <h2>Contacto</h2>
-    <form style="display: flex; flex-direction: column; align-items: center;">
-        <input type="text" placeholder="Tu Nombre" required>
-        <input type="email" placeholder="Tu Email" required>
-        <textarea placeholder="Tu mensaje..." rows="4"></textarea>
-        <button type="submit" class="btn-detalles" style="padding: 15px 30px;">Enviar Mensaje</button>
-    </form>
-</section>
+<script>
+    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
-<footer class="bg-gris">
-    <p>&copy; 2026 Vibra-Path. Todos los derechos reservados.</p>
-</footer>
+    function agregarAlCarrito(nombre, precio) {
+        carrito.push({ nombre, precio });
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        actualizarCarrito();
+        alert('¡Producto agregado al carrito!');
+    }
+
+    function actualizarCarrito() {
+        const lista = document.getElementById('lista-carrito');
+        const cuenta = document.getElementById('cuenta-carrito');
+        const totalDisplay = document.getElementById('total-carrito');
+        lista.innerHTML = '';
+        let total = 0;
+        carrito.forEach((item) => {
+            lista.innerHTML += `<li>${item.nombre} - ${item.precio.toLocaleString()} COP</li>`;
+            total += item.precio;
+        });
+        cuenta.innerText = carrito.length;
+        totalDisplay.innerText = total.toLocaleString();
+    }
+
+    function toggleCarrito() {
+        const modal = document.getElementById('carrito-modal');
+        modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function vaciarCarrito() {
+        carrito = [];
+        localStorage.removeItem('carrito');
+        actualizarCarrito();
+    }
+
+    actualizarCarrito();
+</script>
 
 </body>
 </html>
